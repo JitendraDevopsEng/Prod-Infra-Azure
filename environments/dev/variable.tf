@@ -40,3 +40,17 @@ variable "subnet_shyam_ji" {
         address_prefixes = list(string)
     }))
 }
+
+variable "vm_nic" {
+    description = "values for the VM"
+    type = map(object({
+      name = string
+      location = string
+      resource_group_name = string
+      ip_configuration = object({
+        name = string
+        subnet_id = string
+        private_ip_address_allocation = string 
+      })
+    }))
+}

@@ -20,7 +20,7 @@ vnet_shyam_ji = {
         name = "vnet-shyam-ji"
         location = "East US"
         resource_group_name = "rg-tgs-dev"
-        address_space = ["10.0.1.0/24"]
+        address_space = ["10.0.0.0/16"]
         dns_servers = []
     }
 }
