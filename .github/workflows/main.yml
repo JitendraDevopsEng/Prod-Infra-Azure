@@ -5,13 +5,13 @@ run-name: terraform init plan & apply to ${{ inputs.environments }} by @${{ gith
 on:
   push:
     branches:
-      -main
+      - main
     paths-ignore:
       - "README.md"
   pull_request:
     branches:
-      -main
-      -feature/*
+      - main
+      - 'features/*'
   workflow_dispatch:
     inputs:
       environments:
@@ -24,10 +24,13 @@ on:
     - cron: "0 2 * * *" # india time morning 7:30AM
 
 jobs:
-  terraformInitValidateandFmt:
-    name: terraform init validate & fmt
+  TfsecScanning:
+    name: TFsec Scanning
     runs-on: jeet-runner
     environment: dev
     steps:
-      - run: echo hello chaudhary shahab
+      - name: Clone Repo
+        uses: actions/checkout@master
+      - name: scanning
+        uses: aquasecurity/tfsec-action@v1.0.0
 
