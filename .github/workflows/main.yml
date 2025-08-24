@@ -1,7 +1,7 @@
 name: todo app infra
 
 run-name: terraform init plan & apply to ${{ inputs.environments }} by @${{ github.actor }}
- 
+
 on:
   push:
     branches:
@@ -20,7 +20,6 @@ on:
         default: dev
         type: choice
         options: [dev, qa, prod]
-        
 
 jobs:
   Scanning:
@@ -30,28 +29,64 @@ jobs:
     steps:
       - name: Clone Repo
         uses: actions/checkout@v3
-        
+
       - name: Tfsec Scanning
         run: |
-          echo "Tfsec Scanning...."
+          echo "🔍 Running Tfsec Scanning...."
           tfsec .
 
       - name: Checkov Scanning
         run: |
-          echo "Checkov Scanning...."
+          echo "🔍 Running Checkov Scanning...."
           checkov -d
-         
-      - name: trivy Scanning
+
+      - name: Trivy Scanning
         run: |
-          echo "Trivy Scanning...."
-          trivy config --terraform
+          echo "🔍 Running Trivy Scanning...."
+          trivy config --terraform .
 
- 
-
-  terraform:
-    name: terraform init validate fmt & plan
+  Terraform:
+    name: Terraform Deploy
     runs-on: jeet-runner
-    
+    needs: Scanning
+    environment: ${{ github.event.inputs.environments }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
 
-        
+      # Setup Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: 1.7.5
 
+      # Azure Login (Service Principal)
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # Terraform Init
+      - name: Terraform Init
+        run: |
+          echo "🚀 Running terraform init..."
+          terraform init -backend-config="resource_group_name=${{ secrets.STATE_RG }}" \
+                         -backend-config="storage_account_name=${{ secrets.STATE_STORAGE }}" \
+                         -backend-config="container_name=${{ secrets.STATE_CONTAINER }}" \
+                         -backend-config="key=${{ github.event.inputs.environments }}.tfstate"
+
+      # Terraform Validate
+      - name: Terraform Validate
+        run: |
+          terraform validate
+
+      # Terraform Plan
+      - name: Terraform Plan
+        run: |
+          terraform plan -var-file="environments/${{ github.event.inputs.environments }}.tfvars" -out=tfplan
+
+      # Terraform Apply (only on push, not PR)
+      - name: Terraform Apply
+        if: github.event_name == 'push'
+        run: |
+          terraform apply -auto-approve tfplan
