@@ -1,7 +1,7 @@
 name: todo app infra
 
 run-name: terraform init plan & apply to ${{ inputs.environments }} by @${{ github.actor }}
-
+ 
 on:
   push:
     branches:
