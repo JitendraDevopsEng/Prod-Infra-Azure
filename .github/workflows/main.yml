@@ -1,6 +1,6 @@
 name: todo app infra
 
-run-name: terraform init plan & apply to ${{ inputs.environments }} by @${{ github.actor }}
+run-name: Todo App Infra to ${{ inputs.environments }} by @${{ github.actor }}
 
 on:
   push:
@@ -10,7 +10,6 @@ on:
       - "README.md"
   pull_request:
     branches:
-      - main
       - 'features/*'
   workflow_dispatch:
     inputs:
@@ -54,19 +53,19 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # Setup Terraform
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: 1.7.5
 
-      # Azure Login (Service Principal)
+
       - name: Azure Login
         uses: azure/login@v1
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-      # Terraform Init
+
       - name: Terraform Init
         run: |
           echo "🚀 Running terraform init..."
@@ -75,17 +74,17 @@ jobs:
                          -backend-config="container_name=${{ secrets.STATE_CONTAINER }}" \
                          -backend-config="key=${{ github.event.inputs.environments }}.tfstate"
 
-      # Terraform Validate
+
       - name: Terraform Validate
         run: |
           terraform validate
 
-      # Terraform Plan
+
       - name: Terraform Plan
         run: |
           terraform plan -var-file="environments/${{ github.event.inputs.environments }}.tfvars" -out=tfplan
 
-      # Terraform Apply (only on push, not PR)
+
       - name: Terraform Apply
         if: github.event_name == 'push'
         run: |
