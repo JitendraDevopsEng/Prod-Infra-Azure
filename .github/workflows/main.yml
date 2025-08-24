@@ -1,91 +1,91 @@
-name: todo app infra
+# name: todo app infra
 
-run-name: Todo App Infra to ${{ inputs.environments }} by @${{ github.actor }}
+# run-name: Todo App Infra to ${{ inputs.environments }} by @${{ github.actor }}
 
-on:
-  push:
-    branches:
-      - main
-    paths-ignore:
-      - "README.md"
-  pull_request:
-    branches:
-      - 'features/*'
-  workflow_dispatch:
-    inputs:
-      environments:
-        description: "select environments"
-        required: true
-        default: dev
-        type: choice
-        options: [dev, qa, prod]
+# on:
+#   push:
+#     branches:
+#       - main
+#     paths-ignore:
+#       - "README.md"
+#   pull_request:
+#     branches:
+#       - 'features/*'
+#   workflow_dispatch:
+#     inputs:
+#       environments:
+#         description: "select environments"
+#         required: true
+#         default: dev
+#         type: choice
+#         options: [dev, qa, prod]
 
-jobs:
-  Scanning:
-    name: Scanning Job
-    runs-on: jeet-runner
-    environment: dev
-    steps:
-      - name: Clone Repo
-        uses: actions/checkout@v3
+# jobs:
+#   Scanning:
+#     name: Scanning Job
+#     runs-on: jeet-runner
+#     environment: dev
+#     steps:
+#       - name: Clone Repo
+#         uses: actions/checkout@v3
 
-      - name: Tfsec Scanning
-        run: |
-          echo "🔍 Running Tfsec Scanning...."
-          tfsec .
+#       - name: Tfsec Scanning
+#         run: |
+#           echo "🔍 Running Tfsec Scanning...."
+#           tfsec .
 
-      - name: Checkov Scanning
-        run: |
-          echo "🔍 Running Checkov Scanning...."
-          checkov -d
+#       - name: Checkov Scanning
+#         run: |
+#           echo "🔍 Running Checkov Scanning...."
+#           checkov -d
 
-      - name: Trivy Scanning
-        run: |
-          echo "🔍 Running Trivy Scanning...."
-          trivy config --terraform .
+#       - name: Trivy Scanning
+#         run: |
+#           echo "🔍 Running Trivy Scanning...."
+#           trivy config --terraform .
 
-  Terraform:
-    name: Terraform Deploy
-    runs-on: jeet-runner
-    needs: Scanning
-    environment: ${{ github.event.inputs.environments }}
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v3
-
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: 1.7.5
+#   Terraform:
+#     name: Terraform Deploy
+#     runs-on: jeet-runner
+#     needs: Scanning
+#     environment: ${{ github.event.inputs.environments }}
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v3
 
 
-      - name: Azure Login
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+#       - name: Setup Terraform
+#         uses: hashicorp/setup-terraform@v2
+#         with:
+#           terraform_version: 1.7.5
 
 
-      - name: Terraform Init
-        run: |
-          echo "🚀 Running terraform init..."
-          terraform init -backend-config="resource_group_name=${{ secrets.STATE_RG }}" \
-                         -backend-config="storage_account_name=${{ secrets.STATE_STORAGE }}" \
-                         -backend-config="container_name=${{ secrets.STATE_CONTAINER }}" \
-                         -backend-config="key=${{ github.event.inputs.environments }}.tfstate"
+#       - name: Azure Login
+#         uses: azure/login@v1
+#         with:
+#           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
 
-      - name: Terraform Validate
-        run: |
-          terraform validate
+#       - name: Terraform Init
+#         run: |
+#           echo "🚀 Running terraform init..."
+#           terraform init -backend-config="resource_group_name=${{ secrets.STATE_RG }}" \
+#                          -backend-config="storage_account_name=${{ secrets.STATE_STORAGE }}" \
+#                          -backend-config="container_name=${{ secrets.STATE_CONTAINER }}" \
+#                          -backend-config="key=${{ github.event.inputs.environments }}.tfstate"
 
 
-      - name: Terraform Plan
-        run: |
-          terraform plan -var-file="environments/${{ github.event.inputs.environments }}.tfvars" -out=tfplan
+#       - name: Terraform Validate
+#         run: |
+#           terraform validate
 
 
-      - name: Terraform Apply
-        if: github.event_name == 'push'
-        run: |
-          terraform apply -auto-approve tfplan
+#       - name: Terraform Plan
+#         run: |
+#           terraform plan -var-file="environments/${{ github.event.inputs.environments }}.tfvars" -out=tfplan
+
+
+#       - name: Terraform Apply
+#         if: github.event_name == 'push'
+#         run: |
+#           terraform apply -auto-approve tfplan
