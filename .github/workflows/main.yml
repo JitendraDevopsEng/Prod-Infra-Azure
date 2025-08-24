@@ -1,7 +1,7 @@
 name: todo app infra
 
 run-name: terraform init plan & apply to ${{ inputs.environments }} by @${{ github.actor }}
-
+ 
 on:
   push:
     branches:
@@ -20,17 +20,38 @@ on:
         default: dev
         type: choice
         options: [dev, qa, prod]
-  schedule:
-    - cron: "0 2 * * *" # india time morning 7:30AM
+        
 
 jobs:
-  TfsecScanning:
-    name: TFsec Scanning
+  Scanning:
+    name: Scanning Job
     runs-on: jeet-runner
     environment: dev
     steps:
       - name: Clone Repo
-        uses: actions/checkout@master
-      - name: scanning
-        uses: aquasecurity/tfsec-action@v1.0.0
+        uses: actions/checkout@v3
+        
+      - name: Tfsec Scanning
+        run: |
+          echo "Tfsec Scanning...."
+          tfsec .
+
+      - name: Checkov Scanning
+        run: |
+          echo "Checkov Scanning...."
+          checkov -d
+         
+      - name: trivy Scanning
+        run: |
+          echo "Trivy Scanning...."
+          trivy config --terraform
+
+ 
+
+  terraform:
+    name: terraform init validate fmt & plan
+    runs-on: jeet-runner
+    
+
+        
 
